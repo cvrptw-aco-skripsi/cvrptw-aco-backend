@@ -6,7 +6,7 @@
 - HTTP Method : `GET`
 - Request Param : -
 - Request Header :
-  - Accept : `application/json`
+    - Accept : `application/json`
 - Request Body :
 
 ```json
@@ -23,17 +23,19 @@
   ],
   "nodes": [
     {
-      "xPosition": 2.0,
-      "yPosition": 3.3,
-      "timeWindowIndex": 0
+      "x": 2.0,
+      "y": 3.3,
+      "timeWindowIndex": 0,
+      "demand": 3.0
     },
     {
-      "xPosition": 4.0,
-      "yPosition": -3.6,
-      "timeWindowIndex": 1
+      "x": 4.0,
+      "y": -3.6,
+      "timeWindowIndex": 1,
+      "demand": 4.0
     }
   ],
-  "vehicleCapacity": 1,
+  "vehicleCapacity": 9.0,
   "maxNumberOfVehicle": 10
 }
 ```
@@ -46,14 +48,22 @@
   "status": "OK",
   "data": {
     "numberOfUsedVehicle": 1,
-    "routes": [
+    "totalDistance": 12.3,
+    "vehicles": [
       {
-        "nodeIndex": 0,
-        "arrivalTime": "15:23"
-      },
-      {
-        "nodeIndex": 1,
-        "arrivalTime": "15:49"
+        "nodes": [
+          {
+            "id": 1,
+            "x": 2.0,
+            "y": 3.3,
+            "timeWindowIndex": 0,
+            "demand": 3.0,
+            "visited": true
+          }
+        ],
+        "arrivalTimes": [
+          "10:00"
+        ]
       }
     ]
   },
@@ -69,23 +79,31 @@
   "status": "Bad Request",
   "data": null,
   "errors": {
-    "timeWindows.startTime": [
+    "timeWindows": [
       "REQUIRED",
       "INVALID"
     ],
-    "timeWindows.endTime": [
+    "timeWindows[0].startTime": [
       "REQUIRED",
       "INVALID"
     ],
-    "nodes.xPosition": [
+    "timeWindows[0].endTime": [
       "REQUIRED",
       "INVALID"
     ],
-    "nodes.yPosition": [
+    "nodes": [
       "REQUIRED",
       "INVALID"
     ],
-    "nodes.timeWindowIndex": [
+    "nodes[0].x": [
+      "REQUIRED",
+      "INVALID"
+    ],
+    "nodes[0].y": [
+      "REQUIRED",
+      "INVALID"
+    ],
+    "nodes[0].timeWindowIndex": [
       "REQUIRED",
       "INVALID"
     ],
