@@ -3,7 +3,7 @@
 ## Calculate CVRP using ACO
 
 - Endpoint : `/api/cvrp/aco`
-- HTTP Method : `GET`
+- HTTP Method : `POST`
 - Request Param : -
 - Request Header :
     - Accept : `application/json`

@@ -4,10 +4,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.boot.configurationprocessor.json.JSONException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import tommylohil.cvrptwaco.base.BaseMethod;
 import tommylohil.cvrptwaco.base.BaseResponse;
 import tommylohil.cvrptwaco.controller.path.CVRPControllerPath;
@@ -34,7 +31,7 @@ public class CVRPController {
         this.cvrpService = cvrpService;
     }
 
-    @GetMapping(CVRPControllerPath.CALCULATE_CVRP_USING_ACO)
+    @PostMapping(CVRPControllerPath.CALCULATE_CVRP_USING_ACO)
     public ResponseEntity<?> calculateCVRPUsingACO(@Valid @RequestBody CVRPUsingACORequest request) throws JSONException {
         try {
 
