@@ -10,6 +10,7 @@ import tommylohil.cvrptwaco.base.BaseResponse;
 import tommylohil.cvrptwaco.controller.path.CVRPControllerPath;
 import tommylohil.cvrptwaco.dto.request.CVRPUsingACORequest;
 import tommylohil.cvrptwaco.dto.response.CVRPUsingACOResponse;
+import tommylohil.cvrptwaco.exception.BaseBusinessException;
 import tommylohil.cvrptwaco.model.CVRPUsingACOResult;
 import tommylohil.cvrptwaco.model.Node;
 import tommylohil.cvrptwaco.model.TimeWindow;
@@ -71,8 +72,8 @@ public class CVRPController {
                     ),
                     HttpStatus.OK
             );
-//        } catch (BaseBusinessException exception) {
-//            return BaseMethod.handleBusinessException(exception);
+        } catch (BaseBusinessException exception) {
+            return BaseMethod.handleBusinessException(exception);
         } catch (Exception exception) {
             return BaseMethod.handleException(exception);
         }

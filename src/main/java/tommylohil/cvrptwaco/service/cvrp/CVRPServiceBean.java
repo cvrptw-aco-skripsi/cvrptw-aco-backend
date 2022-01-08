@@ -1,17 +1,17 @@
 package tommylohil.cvrptwaco.service.cvrp;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import tommylohil.cvrptwaco.constant.BusinessError;
 import tommylohil.cvrptwaco.dto.response.CVRPUsingACOResponse;
+import tommylohil.cvrptwaco.exception.BaseBusinessException;
 import tommylohil.cvrptwaco.model.Ant;
 import tommylohil.cvrptwaco.model.CVRPUsingACOResult;
 import tommylohil.cvrptwaco.model.Node;
 import tommylohil.cvrptwaco.model.TimeWindow;
 
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -39,13 +39,13 @@ public class CVRPServiceBean implements CVRPService {
 
         while (iterationCounter <= maxIterationCounter) {
 
-            System.out.println("----------------------New Iteration-------------------");
+            System.out.println("----------------------New Iteration-------------------" + iterationCounter);
             totalDistanceOfAnIteration = 0d;
             resetAllNodeVisited(nodeList);
             antList = new ArrayList<>();
 
             // Looping to create new ant colony
-            while (!isAllNodeVisited(nodeList) && (antList.size() <= maxNumberOfVehicle)) {
+            while (!isAllNodeVisited(nodeList) && (antList.size() < maxNumberOfVehicle)) {
                 // Assign an artificial ant from depot (0, 0) with maximum capacity
                 LinkedList<Node> nodeLinkedList = new LinkedList<>(nodeList);
                 nodeLinkedList.remove(0);
@@ -94,14 +94,12 @@ public class CVRPServiceBean implements CVRPService {
                 System.out.println("Total distance: " + totalDistanceOfAnAnt);
             }
 
-            if (antList.size() > maxNumberOfVehicle) {
-                continue;
-            }
-
             // Get optimal minimum distance
             if (optimalMinimumDistance > totalDistanceOfAnIteration) {
                 iterationCounter = 0;
                 optimalMinimumDistance = totalDistanceOfAnIteration;
+
+                System.out.println("current optimalMinimum distance (changed) = " + optimalMinimumDistance);
 
                 // TODO: Record all information needed to be output
                 result = CVRPUsingACOResult.builder()
@@ -110,15 +108,21 @@ public class CVRPServiceBean implements CVRPService {
                         .build();
             } else {
                 iterationCounter++;
+                System.out.println("current optimalMinimum distance (not changed) = " + optimalMinimumDistance);
+
             }
 
             if (iterationCounter <= maxIterationCounter) {
                 // Update pheromone
+                tauMatrix = updatePheromone(tauMatrix, etaMatrix, euclideanDistanceMatrix, nodeList.size(), rho, antList);
 
             }
         }
 
-        // TODO: Output
+        // Solution not found
+        if (!isAllNodeVisited(nodeList)) {
+            throw new BaseBusinessException(HttpStatus.BAD_REQUEST, "solution", BusinessError.NOT_FOUND);
+        }
 
         return result;
     }
@@ -282,6 +286,41 @@ public class CVRPServiceBean implements CVRPService {
     private void resetAllNodeVisited(List<Node> nodeList) {
         nodeList.stream().forEach(node -> node.setVisited(false));
         nodeList.get(0).setVisited(true);
+    }
+
+    private Double[][] updatePheromone(Double[][] tauMatrix, Double[][] etaMatrix, Double[][] euclideanDistanceMatrix, Integer matrixSize, Double rho, List<Ant> antList) {
+        // Get Δτ(i,j) of all ant
+        Double[][] deltaTau = new Double[matrixSize][matrixSize];
+        for (int i = 0; i < matrixSize; i++) {
+            for (int j = 0; j < i; j++) {
+                deltaTau[i][j] = 0d;
+                deltaTau[j][i] = 0d;
+            }
+        }
+        for (Ant ant: antList) {
+            Double totalDistance = ant.calculateTotalDistance(euclideanDistanceMatrix);
+            for (int i=1; i<ant.getRoute().size(); i++) {
+                Integer sourceId = ant.getRoute().get(i-1).getId();
+                Integer targetId = ant.getRoute().get(i).getId();
+
+                deltaTau[sourceId][targetId] += 1 / totalDistance;
+                deltaTau[targetId][sourceId] += 1 / totalDistance;
+            }
+        }
+
+        // Update pheromone matrix
+        for (int i = 0; i < matrixSize; i++) {
+            for (int j = 0; j < i; j++) {
+                // τ(i,j) = (1-ρ) * τ(i,j) + (iteration: k=1 to m)Σ (Δτ(i,j) of k)
+                tauMatrix[i][j] *= (1 - rho);
+                tauMatrix[j][i] *= (1 - rho);
+
+                tauMatrix[i][j] += deltaTau[i][j];
+                tauMatrix[j][i] += deltaTau[j][i];
+            }
+        }
+
+        return tauMatrix;
     }
 
 }

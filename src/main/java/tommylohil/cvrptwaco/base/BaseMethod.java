@@ -15,6 +15,7 @@ public class BaseMethod {
 
         HashMap<String, List<String>> errorMap = new HashMap<>();
         errorMap.put(exception.getErrorField(), new ArrayList<>());
+        errorMap.get(exception.getErrorField()).add(exception.getErrorMessage());
         return new ResponseEntity<>(
                 new BaseResponse<>(
                         exception.getHttpStatus().value(),

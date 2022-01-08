@@ -7,6 +7,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalTime;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Objects;
 
 @Data
 @Builder
@@ -52,8 +53,12 @@ public class Ant {
         Double totalDistance = 0d;
         System.out.println("Print route..");
         for (int i=1; i<this.route.size(); i++) {
-            System.out.println(this.route.get(i).getId() + " " + this.route.get(i-1).getId());
-            totalDistance += euclideanDistanceMatrix[this.route.get(i).getId()][this.route.get(i-1).getId()];
+            Integer sourceId = this.route.get(i-1).getId();
+            Integer targetId = this.route.get(i).getId();
+            System.out.println(sourceId + " " + targetId);
+            if (!Objects.equals(sourceId, targetId)) {
+                totalDistance += euclideanDistanceMatrix[this.route.get(i).getId()][this.route.get(i-1).getId()];
+            }
         }
 
         return totalDistance;

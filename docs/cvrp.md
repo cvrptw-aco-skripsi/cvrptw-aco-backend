@@ -71,7 +71,7 @@
 }
 ```
 
-- Response Body (Failure) :
+- Response Body (Failure - Validation errors) :
 
 ```json
 {
@@ -114,6 +114,21 @@
     "maxNumberOfVehicle": [
       "REQUIRED",
       "INVALID"
+    ]
+  }
+}
+```
+
+- Response Body (Failure - Business Error) :
+
+```json
+{
+  "code": 400,
+  "status": "Bad Request",
+  "data": null,
+  "errors": {
+    "solution": [
+      "NOT_FOUND"
     ]
   }
 }
