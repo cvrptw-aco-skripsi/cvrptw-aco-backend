@@ -3,7 +3,6 @@ package tommylohil.cvrptwaco.service.cvrp;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import tommylohil.cvrptwaco.constant.BusinessError;
-import tommylohil.cvrptwaco.dto.response.CVRPUsingACOResponse;
 import tommylohil.cvrptwaco.exception.BaseBusinessException;
 import tommylohil.cvrptwaco.model.Ant;
 import tommylohil.cvrptwaco.model.CVRPUsingACOResult;
@@ -27,7 +26,7 @@ public class CVRPServiceBean implements CVRPService {
 
         Double totalDistanceOfAnIteration;
         Integer iterationCounter = 0;
-        Integer maxIterationCounter = 100;
+        Integer maxIterationCounter = 150;
         Double optimalMinimumDistance = Double.MAX_VALUE;
         Double[][] euclideanDistanceMatrix = getEuclideanDistanceMatrix(nodeList);
         Double[][] tauMatrix = getTauMatrix(nodeList.size());
@@ -76,15 +75,19 @@ public class CVRPServiceBean implements CVRPService {
                         } else {
                             System.out.println(">>> next node to be visited list not found");
 
-                            Node depotNode = Node.builder().id(0).x(0.0).y(0.0).demand(0.0).timeWindowIndex(-1).visited(true).build();
-                            List<Node> routeWithLastDepotNode = ant.getRoute();
-                            routeWithLastDepotNode.add(depotNode);
-                            ant.setRoute(routeWithLastDepotNode);
+                            // Add last depot node
+                            ant.setRoute(routeWithLastDepotNode(ant));
 
                             // Next node not found
                             break;
                         }
                     }
+                }
+
+                // If last ant node is not depot, then add depot node
+                Node lastNode = ant.getRoute().get(ant.getRoute().size() - 1);
+                if ((lastNode.getX() != 0) || (lastNode.getY() != 0)) {
+                    ant.setRoute(routeWithLastDepotNode(ant));
                 }
 
                 // Calculate total distance of an ant
@@ -99,17 +102,13 @@ public class CVRPServiceBean implements CVRPService {
                 iterationCounter = 0;
                 optimalMinimumDistance = totalDistanceOfAnIteration;
 
-                System.out.println("current optimalMinimum distance (changed) = " + optimalMinimumDistance);
-
-                // TODO: Record all information needed to be output
+                // Record all information needed to be output
                 result = CVRPUsingACOResult.builder()
                         .antList(antList)
                         .totalDistance(optimalMinimumDistance)
                         .build();
             } else {
                 iterationCounter++;
-                System.out.println("current optimalMinimum distance (not changed) = " + optimalMinimumDistance);
-
             }
 
             if (iterationCounter <= maxIterationCounter) {
@@ -323,4 +322,11 @@ public class CVRPServiceBean implements CVRPService {
         return tauMatrix;
     }
 
+    // return new routes
+    private List<Node> routeWithLastDepotNode(Ant ant) {
+        Node depotNode = Node.builder().id(0).x(0.0).y(0.0).demand(0.0).timeWindowIndex(-1).visited(true).build();
+        List<Node> route = ant.getRoute();
+        route.add(depotNode);
+        return route;
+    }
 }
