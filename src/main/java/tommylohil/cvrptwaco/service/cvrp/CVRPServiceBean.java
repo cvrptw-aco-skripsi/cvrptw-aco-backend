@@ -23,7 +23,6 @@ public class CVRPServiceBean implements CVRPService {
         Double alpha = 2.0d;
         Double beta = 1.0d;
         Double rho = .05d;
-
         Double totalDistanceOfAnIteration;
         Integer iterationCounter = 0;
         Integer maxIterationCounter = 150;
@@ -35,74 +34,44 @@ public class CVRPServiceBean implements CVRPService {
         List<Node> route;
         List<Ant> antList;
         CVRPUsingACOResult result = null;
-
         while (iterationCounter <= maxIterationCounter) {
-
-            System.out.println("----------------------New Iteration-------------------" + iterationCounter);
             totalDistanceOfAnIteration = 0d;
             resetAllNodeVisited(nodeList);
             antList = new ArrayList<>();
-
-            // Looping to create new ant colony
             while (!isAllNodeVisited(nodeList) && (antList.size() < maxNumberOfVehicle)) {
-                // Assign an artificial ant from depot (0, 0) with maximum capacity
                 LinkedList<Node> nodeLinkedList = new LinkedList<>(nodeList);
                 nodeLinkedList.remove(0);
                 route = new ArrayList<>();
                 route.add(nodeList.get(0));
                 nodeLinkedList = new LinkedList<>(nodeLinkedList.stream().filter(node -> !node.getVisited()).collect(Collectors.toList()));
                 Ant ant = Ant.builder().availableNodeList(nodeLinkedList).route(route).arrivalTimeList(new ArrayList<>()).capacity(vehicleCapacity).currentTime(earliestStartTime).build();
-                System.out.println("----------------------New Ant-----------------------");
-
                 while (ant.getCapacity() > 0) {
-                    System.out.println("\n\ncapacity = " + ant.getCapacity());
                     List<Node> currentAvailableNodeList = getCurrentAvailableNodeList(ant, timeWindowList, euclideanDistanceMatrix);
                     if (currentAvailableNodeList.size() > 0) {
-                        System.out.println(">>> current available node list");
-                        System.out.println(currentAvailableNodeList);
 
-                        // Choose node using random proportional rule
                         chooseAndVisitNode(ant, currentAvailableNodeList, timeWindowList, alpha, beta, rho, tauMatrix, etaMatrix, euclideanDistanceMatrix);
                     } else {
-                        // Get next node to be visited
                         List<Node> nextNodeToBeVisitedList = getNextAvailableNodeList(ant, timeWindowList, euclideanDistanceMatrix);
                         if (nextNodeToBeVisitedList.size() > 0) {
-                            System.out.println(">>> next node to be visited list");
-                            System.out.println(nextNodeToBeVisitedList);
 
-                            // Choose node using random proportional rule
                             chooseAndVisitNode(ant, nextNodeToBeVisitedList, timeWindowList, alpha, beta, rho, tauMatrix, etaMatrix, euclideanDistanceMatrix);
                         } else {
-                            System.out.println(">>> next node to be visited list not found");
-
-                            // Add last depot node
                             ant.setRoute(routeWithLastDepotNode(ant));
-
-                            // Next node not found
                             break;
                         }
                     }
                 }
-
-                // If last ant node is not depot, then add depot node
                 Node lastNode = ant.getRoute().get(ant.getRoute().size() - 1);
                 if ((lastNode.getX() != 0) || (lastNode.getY() != 0)) {
                     ant.setRoute(routeWithLastDepotNode(ant));
                 }
-
-                // Calculate total distance of an ant
                 Double totalDistanceOfAnAnt = ant.calculateTotalDistance(euclideanDistanceMatrix);
                 totalDistanceOfAnIteration += totalDistanceOfAnAnt;
                 antList.add(ant);
-                System.out.println("Total distance: " + totalDistanceOfAnAnt);
             }
-
-            // Get optimal minimum distance
             if (optimalMinimumDistance > totalDistanceOfAnIteration) {
                 iterationCounter = 0;
                 optimalMinimumDistance = totalDistanceOfAnIteration;
-
-                // Record all information needed to be output
                 result = CVRPUsingACOResult.builder()
                         .antList(antList)
                         .totalDistance(optimalMinimumDistance)
@@ -110,19 +79,13 @@ public class CVRPServiceBean implements CVRPService {
             } else {
                 iterationCounter++;
             }
-
             if (iterationCounter <= maxIterationCounter) {
-                // Update pheromone
                 tauMatrix = updatePheromone(tauMatrix, etaMatrix, euclideanDistanceMatrix, nodeList.size(), rho, antList);
-
             }
         }
-
-        // Solution not found
         if (!isAllNodeVisited(nodeList)) {
             throw new BaseBusinessException(HttpStatus.BAD_REQUEST, "solution", BusinessError.NOT_FOUND);
         }
-
         return result;
     }
 
@@ -240,15 +203,11 @@ public class CVRPServiceBean implements CVRPService {
                 probability.add(tauTimesEtaList.get(index) / totalTauTimesEta);
             }
 
-            System.out.println("choose >> currentAvailableNodeList = " + currentAvailableNodeList);
-
             // Select a node by implementing Roulette Wheel
             Double sumOfProbability = 0.0;
             Double randomNumber = Math.random();
             for (int index = 0; index < currentAvailableNodeList.size(); index++) {
-                System.out.println("random number = " + randomNumber);
                 sumOfProbability += probability.get(index);
-                System.out.println("sumOfProbability = " + sumOfProbability);
                 if (randomNumber <= sumOfProbability) {
                     chosenNode = currentAvailableNodeList.get(index);
                     arrivalTime = ant.getCurrentTime().plusMinutes(kmToMinutes(euclideanDistanceMatrix[currentNode.getId()][chosenNode.getId()]));
@@ -256,7 +215,6 @@ public class CVRPServiceBean implements CVRPService {
                     // Set ant current time
                     LocalTime nodeTimeWindowStartTime = timeWindowList.get(currentAvailableNodeList.get(index).getTimeWindowIndex()).getStartTime();
                     if (arrivalTime.isBefore(nodeTimeWindowStartTime)) {
-                        System.out.println("start time = " + nodeTimeWindowStartTime);
                         ant.setCurrentTime(nodeTimeWindowStartTime);
                     }
 
@@ -266,9 +224,7 @@ public class CVRPServiceBean implements CVRPService {
         }
 
         // Visit the chosen node
-        System.out.println("chosen node: " + chosenNode);
         ant.visit(chosenNode, arrivalTime);
-
     }
 
     private Long kmToMinutes(Double km) {
@@ -276,9 +232,6 @@ public class CVRPServiceBean implements CVRPService {
     }
 
     private Boolean isAllNodeVisited(List<Node> nodeList) {
-        nodeList.stream().forEach(node -> {
-            System.out.println("\n----------------------> node " + node.getId() + " visited is " + node.getVisited() + "\n");
-        });
         return nodeList.stream().allMatch(node -> node.getVisited() == true);
     }
 
